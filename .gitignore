@@ -3,6 +3,8 @@ Build/Obj/
 .vs/
 *.sln
 *.slnx
+*.vcxproj*
 *.make
 Makefile
 .DS_Store
+Vendor/*

@@ -16,15 +16,14 @@
 
 using namespace def;
 
-// Local wrapper avoids cross-TU data reference (.refptr.) for LuaPanic
-static int lua_panic_fn(lua_State* L)
+static int wrap_LuaPanic(lua_State* L)
 {
 	const char* msg = lua_tostring(L, -1);
 	LuaPanic(msg ? std::optional<std::string>{msg} : std::nullopt);
 	return 0;
 }
 
-sol::state lua(lua_panic_fn);
+sol::state g_Lua(wrap_LuaPanic);
 
 class Application : public GameEngine
 {
@@ -101,30 +100,30 @@ public:
 protected:
 	bool OnUserCreate() override
 	{
-		if (!lua["OnCreate"].valid())
+		if (!g_Lua["OnCreate"].valid())
 		{
 			std::cerr << "[LUA] OnCreate function must be provided" << std::endl;
 			return false;
 		}
 
-		if (!lua["OnUpdate"].valid())
+		if (!g_Lua["OnUpdate"].valid())
 		{
 			std::cerr << "[LUA] OnUpdate function must be provided" << std::endl;
 			return false;
 		}
 
-		return lua["OnCreate"]();
+		return g_Lua["OnCreate"]();
 	}
 
 	bool OnUserUpdate(float deltaTime) override
 	{
-		return lua["OnUpdate"](deltaTime);
+		return g_Lua["OnUpdate"](deltaTime);
 	}
 };
 
 bool CreateApp(Vector2i& screenSize, Vector2i& pixelSize, std::string& title, bool& fullScreen, bool& vsync, bool& dirtyPixel)
 {
-	sol::function luaCreateApp = lua["CreateApp"];
+	sol::function luaCreateApp = g_Lua["CreateApp"];
 
 	if (!luaCreateApp.valid())
 	{
@@ -167,7 +166,7 @@ bool CreateApp(Vector2i& screenSize, Vector2i& pixelSize, std::string& title, bo
 
 void RegisterKeyState()
 {
-	lua.new_usertype<KeyState>("KeyState",
+	g_Lua.new_usertype<KeyState>("KeyState",
 		sol::constructors<KeyState(), KeyState(bool, bool, bool)>(),
 		"held", sol::property(&KeyState::held, &KeyState::held),
 		"released", sol::property(&KeyState::released, &KeyState::released),
@@ -177,31 +176,27 @@ void RegisterKeyState()
 
 void RegisterPixel()
 {
-	InitialisePixelConstants(lua);
-	InitialisePixelType(lua);
+	InitialisePixelConstants(g_Lua);
+	InitialisePixelType(g_Lua);
 }
 
 void RegisterSprite()
 {
-	InitialiseSpriteConstants(lua);
-	InitialiseSpriteType(lua);
+	InitialiseSpriteConstants(g_Lua);
+	InitialiseSpriteType(g_Lua);
 }
 
 void RegisterTexture()
 {
-	InitialiseTextureConstants(lua);
-	InitialiseTextureType(lua);
+	InitialiseTextureConstants(g_Lua);
+	InitialiseTextureType(g_Lua);
 }
 
 void RegisterApp()
 {
-	// Non-capturing lambdas are converted to function pointers by sol2, triggering
-	// a g++/MinGW-PE COMDAT bug where the wrapper template is never emitted.
-	// Capturing lambdas ([_=0]) have unique closure types — sol2 uses operator()
-	// directly, bypassing the problematic function-pointer conversion path.
 #define L [_=0]
 
-	lua.new_usertype<Application>("Application",
+	g_Lua.new_usertype<Application>("Application",
 		// Drawing
 		"Draw", sol::overload(
 			L(Application& a, int x, int y, const Pixel& c) -> bool { return a.Draw(x, y, c); },
@@ -379,21 +374,21 @@ void RegisterApp()
 
 void RegisterAll(std::shared_ptr<Application> app)
 {
-	InitialiseVec2dType<Vector2i>(lua, "Vector2i");
-	InitialiseVec2dType<Vector2f>(lua, "Vector2f");
-	InitialiseVec2dType<Vector2d>(lua, "Vector2d");
+	InitialiseVec2dType<Vector2i>(g_Lua, "Vector2i");
+	InitialiseVec2dType<Vector2f>(g_Lua, "Vector2f");
+	InitialiseVec2dType<Vector2d>(g_Lua, "Vector2d");
 
 	RegisterKeyState();
-	InitialiseKeyboardConstants(lua);
-	InitialiseMouseConstants(lua);
+	InitialiseKeyboardConstants(g_Lua);
+	InitialiseMouseConstants(g_Lua);
 	RegisterApp();
 	RegisterPixel();
 	RegisterSprite();
 	RegisterTexture();
-	InitialiseGraphicType(lua);
-	InitialiseLayerType(lua);
+	InitialiseGraphicType(g_Lua);
+	InitialiseLayerType(g_Lua);
 
-	lua["app"] = app;
+	g_Lua["Dge"] = app;
 }
 
 bool RunApplication(std::shared_ptr<Application> app)
@@ -425,15 +420,15 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	lua.open_libraries();
+	g_Lua.open_libraries();
 
 	auto app = std::make_shared<Application>();
 	RegisterAll(app);
 
-	if (!lua.script(g_HelpersSource).valid())
+	if (!g_Lua.script(g_HelpersSource).valid())
 		return 1;
 
-	if (!lua.script_file(argv[1]).valid())
+	if (!g_Lua.script_file(argv[1]).valid())
 		return 1;
 
 	return RunApplication(app) ? EXIT_SUCCESS : EXIT_FAILURE;

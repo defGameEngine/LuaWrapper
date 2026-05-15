@@ -19,7 +19,7 @@ function OnCreate()
 	math.randomseed(os.time())
 
 	tile_size = Vector2i:new(8, 8)
-	world_size = app:GetScreenSize() // tile_size
+	world_size = Dge:GetScreenSize() // tile_size
 	NewGame()
 	
 	return true
@@ -31,17 +31,17 @@ end
 
 function OnUpdate(dt)
 	if is_dead then
-		if app:GetKey(Key.Space).pressed then NewGame() end
+		if Dge:GetKey(Key.Space).pressed then NewGame() end
 
-		app:DrawString(1, app:ScreenHeight() // 2, "Game over! Press SPACE to play again.", Colour.Yellow, 1, 1)
+		Dge:DrawString(1, Dge:ScreenHeight() // 2, "Game over! Press SPACE to play again.", Colour.Yellow, 1, 1)
 
 		return true
 	end
 
-	if app:GetKey(Key.Left).pressed then snake_dir = Vector2i:new(-1, 0) end
-	if app:GetKey(Key.Right).pressed then snake_dir = Vector2i:new(1, 0) end
-	if app:GetKey(Key.Up).pressed then snake_dir = Vector2i:new(0, -1) end
-	if app:GetKey(Key.Down).pressed then snake_dir = Vector2i:new(0, 1) end
+	if Dge:GetKey(Key.Left).pressed then snake_dir = Vector2i:new(-1, 0) end
+	if Dge:GetKey(Key.Right).pressed then snake_dir = Vector2i:new(1, 0) end
+	if Dge:GetKey(Key.Up).pressed then snake_dir = Vector2i:new(0, -1) end
+	if Dge:GetKey(Key.Down).pressed then snake_dir = Vector2i:new(0, 1) end
 
 	if counter > delay then
 		counter = 0.0
@@ -76,15 +76,15 @@ function OnUpdate(dt)
 
 	counter = counter + dt
 
-	app:Clear(Pixel:new(32, 32, 32, 255))
+	Dge:Clear(Pixel:new(32, 32, 32, 255))
 
-	app:DrawString(2, 2, "Score: " .. score, Colour.Yellow, 1, 1)
+	Dge:DrawString(2, 2, "Score: " .. score, Colour.Yellow, 1, 1)
 
 	for k, v in pairs(snake) do
-		app:FillRectangle(tile_size * v.pos, tile_size, v.color)
+		Dge:FillRectangle(tile_size * v.pos, tile_size, v.color)
 	end
 
-	app:FillRectangle(tile_size * apple, tile_size, Colour.Red)
+	Dge:FillRectangle(tile_size * apple, tile_size, Colour.Red)
 
 	return true
 end

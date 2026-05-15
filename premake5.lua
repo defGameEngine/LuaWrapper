@@ -6,13 +6,6 @@
      See LICENSE file in the project root for license information.
  -----------------------------------------------------------------]]
 
-newoption
-{
-    trigger = "msys2",
-    value = "PATH",
-    description = "Path to MSYS2 MinGW64 root (default: C:/msys64/mingw64)"
-}
-
 workspace "LuaWrapper"
     startproject "LuaWrapper"
 
@@ -22,56 +15,47 @@ workspace "LuaWrapper"
         "Release"
     }
 
-    filter "system:windows"
+    filter "system:windows or system:linux"
         architecture "x64"
+
+    filter "system:macosx"
+        architecture "ARM64"
 
     filter {}
 
 OUTPUT_DIR = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-MSYS2 = _OPTIONS["msys2"] or "C:/msys64/mingw64"
 
 include "Vendor/defGameEngine/Engine/Vendor/glfw"
 
-project "Engine"
-    location "Vendor/defGameEngine/Engine"
-    kind "StaticLib"
-    language "C++"
-    cppdialect "C++20"
-
+project "Lua"
+    location "Vendor/lua"
+    kind "SharedLib"
+    language "C"
+    
     targetdir ("%{wks.location}/Build/Target/" .. OUTPUT_DIR .. "/%{prj.name}")
     objdir ("%{wks.location}/Build/Obj/" .. OUTPUT_DIR .. "/%{prj.name}")
 
-    defines { "DGE_PLATFORM_GLFW3" }
+    staticruntime "On"
+
+    defines { "LUA_BUILD_AS_DLL" }
 
     files
     {
-        "Vendor/defGameEngine/Engine/Include/*.hpp",
-        "Vendor/defGameEngine/Engine/Sources/*.cpp"
+        "Vendor/lua/l*.c"
     }
 
     removefiles
     {
-        "Vendor/defGameEngine/Engine/Sources/Utils.cpp",
-        "Vendor/defGameEngine/Engine/Sources/PlatformEmscripten.cpp",
-        "Vendor/defGameEngine/Engine/Sources/PlatformSDL3.cpp"
+        "Vendor/lua/ltests.c"
     }
 
     includedirs
     {
-        "Vendor/defGameEngine/Engine/Include",
-        "Vendor/defGameEngine/Engine/Sources",
-        "Vendor/defGameEngine/Engine/Vendor/stb",
-        "Vendor/defGameEngine/Engine/Vendor/glfw/include"
+        "Vendor/lua"
     }
 
-    links { "GLFW3" }
-
     filter "system:windows"
-        links
-        {
-            "opengl32", "glu32", "gdi32", "user32", "kernel32",
-            "winmm", "imm32", "version", "setupapi"
-        }
+        links { "kernel32" }
         systemversion "latest"
 
     filter "configurations:Debug"
@@ -87,6 +71,88 @@ project "Engine"
         "{COPY} %{cfg.buildtarget.relpath} \"%{wks.location}/Build/Target/" .. OUTPUT_DIR .. "/LuaWrapper/\""
     }
 
+project "Engine"
+    location "Vendor/defGameEngine/Engine"
+    kind "StaticLib"
+    language "C++"
+    cppdialect "C++20"
+
+    targetdir ("%{wks.location}/Build/Target/" .. OUTPUT_DIR .. "/%{prj.name}")
+    objdir ("%{wks.location}/Build/Obj/" .. OUTPUT_DIR .. "/%{prj.name}")
+
+    staticruntime "On"
+
+    defines { "DGE_PLATFORM_GLFW3" }
+
+    pchheader "Pch.hpp"
+    pchsource "Vendor/defGameEngine/Engine/Sources/Pch.cpp"
+
+    files
+    {
+        "Vendor/defGameEngine/Engine/Include/*.hpp",
+        "Vendor/defGameEngine/Engine/Sources/*.cpp"
+    }
+
+    removefiles
+    {
+        "Vendor/defGameEngine/Engine/Include/PlatformEmscripten.hpp",
+        "Vendor/defGameEngine/Engine/Sources/PlatformEmscripten.cpp",
+        "Vendor/defGameEngine/Engine/Include/PlatformSDL3.hpp",
+        "Vendor/defGameEngine/Engine/Sources/PlatformSDL3.cpp",
+        "Vendor/defGameEngine/Engine/Sources/Utils.cpp"
+    }
+
+    includedirs
+    {
+        "Vendor/defGameEngine/Engine/Include",
+        "Vendor/defGameEngine/Engine/Sources",
+        "Vendor/defGameEngine/Engine/Vendor/stb",
+        "Vendor/defGameEngine/Engine/Vendor/glfw/include",
+        "Vendor/sol2/include",
+        "Vendor/lua"
+    }
+
+    links { "GLFW3" }
+
+    filter "system:windows"
+        links
+        {
+            "opengl32", "glu32", "gdi32", "user32", "kernel32",
+            "winmm", "imm32", "version", "setupapi"
+        }
+        systemversion "latest"
+
+    filter "system:linux"
+        links
+        {
+            "GL", "GLU", "glut", "GLEW", "X11",
+            "Xxf86vm", "Xrandr", "pthread", "Xi", "dl",
+            "Xinerama", "Xcursor", "m"
+        }
+
+    filter "system:macosx"
+        links
+        {
+            "Metal.framework", "QuartzCore.framework",
+            "Cocoa.framework", "OpenGL.framework",
+            "IOKit.framework", "CoreVideo.framework"
+        }
+
+    filter {}
+
+    postbuildcommands
+    {
+        "{COPY} %{cfg.buildtarget.relpath} \"%{wks.location}/Build/Target/" .. OUTPUT_DIR .. "/LuaWrapper/\""
+    }
+
+    filter "configurations:Debug"
+        symbols "On"
+
+    filter "configurations:Release"
+        optimize "On"
+
+    filter {}
+
 project "LuaWrapper"
     location "."
     kind "ConsoleApp"
@@ -96,9 +162,10 @@ project "LuaWrapper"
     targetdir ("%{wks.location}/Build/Target/" .. OUTPUT_DIR .. "/%{prj.name}")
     objdir ("%{wks.location}/Build/Obj/" .. OUTPUT_DIR .. "/%{prj.name}")
 
+    staticruntime "On"
+
     defines
     {
-        "DGE_PLATFORM_GLFW3",
         "SOL_ALL_SAFETIES_ON=1"
     }
 
@@ -113,38 +180,52 @@ project "LuaWrapper"
         "Include",
         "Vendor/defGameEngine/Engine/Include",
         "Vendor/defGameEngine/Engine/Vendor/stb",
+        "Vendor/defGameEngine/Engine/Vendor/glfw/include",
         "Vendor/sol2/include",
-        MSYS2 .. "/include"
+        "Vendor/lua"
     }
-
-    libdirs { MSYS2 .. "/lib" }
 
     links
     {
         "Engine",
         "GLFW3",
-        "lua",
-        "opengl32", "glu32", "gdi32", "user32", "kernel32",
-        "winmm", "imm32", "version", "setupapi"
+        "Lua"
     }
 
     filter "system:windows"
-        systemversion "latest"
-
-        postbuildcommands
+        links
         {
-            "{COPY} " .. MSYS2 .. "/bin/lua55.dll %{cfg.targetdir}",
-            "{COPY} " .. MSYS2 .. "/bin/glfw3.dll %{cfg.targetdir}",
-            "{COPY} " .. MSYS2 .. "/bin/libstdc++-6.dll %{cfg.targetdir}",
-            "{COPY} " .. MSYS2 .. "/bin/libgcc_s_seh-1.dll %{cfg.targetdir}",
-            "{COPY} " .. MSYS2 .. "/bin/libwinpthread-1.dll %{cfg.targetdir}"
+            "opengl32", "glu32", "gdi32", "user32", "kernel32",
+            "winmm", "imm32", "version", "setupapi"
         }
+        systemversion "latest"
+        buildoptions { "/bigobj" }
+
+    filter "system:linux"
+        links
+        {
+            "GL", "GLU", "glut", "GLEW", "X11",
+            "Xxf86vm", "Xrandr", "pthread", "Xi", "dl",
+            "Xinerama", "Xcursor", "m"
+        }
+
+    filter "system:macosx"
+        links
+        {
+            "Metal.framework", "QuartzCore.framework",
+            "Cocoa.framework", "OpenGL.framework",
+            "IOKit.framework", "CoreVideo.framework"
+        }
+
+    filter {}
 
     -- sol2 template instantiations require at least -O1 to avoid a
     -- g++/MinGW-PE COMDAT bug where COMDAT sections are silently omitted at -O0
     filter "configurations:Debug"
         symbols "On"
-        buildoptions { "-O1" }
+        filter "system:windows"
+            buildoptions { "-O1" }
+        filter {}
 
     filter "configurations:Release"
         optimize "On"

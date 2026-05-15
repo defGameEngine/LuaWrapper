@@ -5,4 +5,7 @@
 [submodule "Vendor/defGameEngine"]
 	path = Vendor/defGameEngine
 	url = https://github.com/defGameEngine/defGameEngine
-	branch = develop
+	branch = master
+[submodule "Vendor/lua"]
+	path = Vendor/lua
+	url = https://github.com/defini7/lua.git
