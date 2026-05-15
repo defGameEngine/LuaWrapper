@@ -1,3 +1,9 @@
+/*-----------------------------------------------------------------
+ *  Copyright 2026 defini7 and J-Starling. All rights reserved.
+ *  Licensed under the GNU General Public License v3.0.
+ *  See LICENSE file in the project root for license information.
+ *----------------------------------------------------------------*/
+
 #include "../Include/Types.hpp"
 #include "defGameEngine.hpp"
 
@@ -6,18 +12,14 @@ using namespace def;
 void InitialiseLayerType(sol::state& lua)
 {
 	lua.new_usertype<Layer>("Layer",
-		sol::constructors<Layer()>(),
-		"textures", sol::property(&Layer::textures),
-		"pixels", sol::property(&Layer::pixels),
-		"target", sol::property(&Layer::target),
-		"offset", sol::property(&Layer::offset),
-		"size", sol::property(&Layer::size),
-		"textureStructure", sol::property(&Layer::textureStructure),
-		"pixelMode", sol::property(&Layer::pixelMode),
-		"visible", sol::property(&Layer::visible),
-		"update", sol::property(&Layer::update),
-		"tint", sol::property(&Layer::tint),
-		"shader", sol::property(&Layer::shader)
+		sol::no_constructor,
+		"visible", sol::property(&Layer::IsVisible, &Layer::SetVisible),
+		"update", sol::property(&Layer::IsUpdating, &Layer::SetUpdating),
+		"tint", sol::property(&Layer::GetTint, &Layer::SetTint),
+		"offset", sol::property(&Layer::GetOffset, &Layer::SetOffset),
+		"size", sol::property(&Layer::GetSize),
+		"textureStructure", sol::property(&Layer::GetLayerTextureStructure, &Layer::SetLayerTextureStructure),
+		"pixelMode", sol::property(&Layer::GetLayerPixelMode, &Layer::SetLayerPixelMode)
 	);
 }
 
@@ -232,6 +234,9 @@ void InitialiseMouseConstants(sol::state& lua)
 		"Right", Button::RIGHT,
 		"Wheel", Button::WHEEL,
 		"Mouse4", Button::MOUSE4,
-		"Mouse5", Button::MOUSE5
+		"Mouse5", Button::MOUSE5,
+		"Mouse6", Button::MOUSE6,
+		"Mouse7", Button::MOUSE7,
+		"Mouse8", Button::MOUSE8
 	);
 }

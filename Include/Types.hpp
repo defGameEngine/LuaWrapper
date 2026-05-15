@@ -1,3 +1,9 @@
+/*-----------------------------------------------------------------
+ *  Copyright 2026 defini7 and J-Starling. All rights reserved.
+ *  Licensed under the GNU General Public License v3.0.
+ *  See LICENSE file in the project root for license information.
+ *----------------------------------------------------------------*/
+
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
@@ -29,8 +35,8 @@ void InitialiseVec2dType(sol::state& lua, const std::string_view name)
 		"Floor", &T::Floor,
 		"Ceil", &T::Ceil,
 		"Round", &T::Round,
-		"Cartesian", &T::Cartesian,
-		"Polar", &T::Polar,
+		"Cartesian", &T::ToCartesian,
+		"Polar", &T::ToPolar,
 		"ToString", &T::ToString
 	);
 }

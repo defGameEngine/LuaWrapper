@@ -1,0 +1,5 @@
+Build/Target/
+.vs/
+*.sln
+*.slnx
+.DS_Store

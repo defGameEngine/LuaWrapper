@@ -1,3 +1,9 @@
+/*-----------------------------------------------------------------
+ *  Copyright 2026 defini7 and J-Starling. All rights reserved.
+ *  Licensed under the GNU General Public License v3.0.
+ *  See LICENSE file in the project root for license information.
+ *----------------------------------------------------------------*/
+
 #include "../Include/Constants.hpp"
 #include "defGameEngine.hpp"
 
@@ -72,16 +78,10 @@ void InitialiseTextureConstants(sol::state& lua)
 {
 	lua.new_enum("TextureStructure",
 		"Default", Texture::Structure::DEFAULT,
-		"Fan", Texture::Structure::FAN,
-		"Strip", Texture::Structure::STRIP
-	);
-}
-
-void InitialiseWindowState(sol::state& lua)
-{
-	lua.new_enum("WindowState",
-		"None", WindowState::NONE,
-		"Maximized", WindowState::MAXIMIZED,
-		"Focused", WindowState::FOCUSED
+		"Fan", Texture::Structure::TRIANGLE_FAN,
+		"Strip", Texture::Structure::TRIANGLE_STRIP,
+		"Lines", Texture::Structure::LINES,
+		"LineStrip", Texture::Structure::LINE_STRIP,
+		"Wireframe", Texture::Structure::WIREFRAME
 	);
 }
