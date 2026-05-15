@@ -1,0 +1,8 @@
+[submodule "Vendor/sol2"]
+	path = Vendor/sol2
+	url = https://github.com/defGameEngine/sol2
+	branch = develop
+[submodule "Vendor/defGameEngine"]
+	path = Vendor/defGameEngine
+	url = https://github.com/defGameEngine/defGameEngine
+	branch = develop

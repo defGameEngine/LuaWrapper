@@ -1,5 +1,8 @@
 Build/Target/
+Build/Obj/
 .vs/
 *.sln
 *.slnx
+*.make
+Makefile
 .DS_Store
