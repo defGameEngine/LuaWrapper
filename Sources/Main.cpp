@@ -30,7 +30,7 @@ class Application : public GameEngine
 public:
 	Application() {}
 
-	// === Input ===
+	// Input
 
 	KeyState GetKey(Key key) { return Input().GetKeyState(key); }
 	KeyState GetMouse(Button btn) { return Input().GetButtonState(btn); }
@@ -45,7 +45,7 @@ public:
 	bool IsCaps() { return Input().IsCaps(); }
 	void ClearCapturedText() { Input().ClearCapturedText(); }
 
-	// === Window ===
+	// Window
 
 	Vector2i GetScreenSize() { return GameEngine::Window().GetScreenSize(); }
 	Vector2i GetWindowSize() { return GameEngine::Window().GetWindowSize(); }
@@ -63,19 +63,19 @@ public:
 	void EnableVSync(bool enable) { GameEngine::Window().EnableVSync(enable); }
 	void EnableFullscreen(bool enable) { GameEngine::Window().EnableFullscreen(enable); }
 
-	// === Timer ===
+	// Timer
 
 	float GetDeltaTime() { return GameEngine::Timer().GetDeltaTime(); }
 	int GetFPS() { return GameEngine::Timer().GetFPS(); }
 
-	// === Console ===
+	// Console
 
 	void SetConsoleBackgroundColour(const Pixel& col) { GameEngine::Console().SetBackgroundColour(col); }
 	void ShowConsole(bool show) { GameEngine::Console().Show(show); }
 	bool IsConsoleEnabled() { return GameEngine::Console().IsShown(); }
 	void ClearConsole() { GameEngine::Console().Clear(); }
 
-	// === Layers ===
+	// Layers
 
 	size_t CreateLayerSimple(const Vector2i& offset, const Vector2i& size)
 	{
@@ -91,24 +91,24 @@ public:
 	size_t GetPickedLayer() { return GameEngine::GetCurrentLayer(); }
 	Layer* GetLayerByIndex(size_t index) { return GameEngine::GetLayer(index); }
 
-	// === States ===
+	// States
 
 	void PickState(size_t index) { GameEngine::SetState(index); }
 	size_t GetPickedState() { return GameEngine::GetCurrentState(); }
 	State* GetStateByIndex(size_t index) { return GameEngine::GetState(index); }
 
-	// === Audio ===
+	// Audio
 
-	bool AudioLoad(const std::string& id, const std::string& path) { return GameEngine::Audio().Load(id, path); }
-	void AudioUnload(const std::string& id) { GameEngine::Audio().Unload(id); }
-	void AudioPlay(const std::string& id, bool loop, float volume) { GameEngine::Audio().Play(id, loop, volume); }
-	void AudioPlayOneShot(const std::string& path) { GameEngine::Audio().PlayOneShot(path); }
-	void AudioStop(const std::string& id) { GameEngine::Audio().Stop(id); }
-	void AudioPause(const std::string& id) { GameEngine::Audio().Pause(id); }
-	void AudioResume(const std::string& id) { GameEngine::Audio().Resume(id); }
-	bool AudioIsPlaying(const std::string& id) { return GameEngine::Audio().IsPlaying(id); }
-	void AudioSetVolume(const std::string& id, float volume) { GameEngine::Audio().SetVolume(id, volume); }
-	float AudioGetVolume(const std::string& id) { return GameEngine::Audio().GetVolume(id); }
+	bool AudioLoad(uint32_t id, const std::string& path) { return GameEngine::Audio().Load(id, path); }
+	void AudioUnload(uint32_t id) { GameEngine::Audio().Unload(id); }
+	void AudioPlay(uint32_t id, bool loop, float volume) { GameEngine::Audio().Play(id, loop, volume); }
+	void AudioPlayShot(const std::string& path) { GameEngine::Audio().Play(path); }
+	void AudioStop(uint32_t id) { GameEngine::Audio().Stop(id); }
+	void AudioPause(uint32_t id) { GameEngine::Audio().Pause(id); }
+	void AudioResume(uint32_t id) { GameEngine::Audio().Resume(id); }
+	bool AudioIsPlaying(uint32_t id) { return GameEngine::Audio().IsPlaying(id); }
+	void AudioSetVolume(uint32_t id, float volume) { GameEngine::Audio().SetVolume(id, volume); }
+	float AudioGetVolume(uint32_t id) { return GameEngine::Audio().GetVolume(id); }
 	void AudioSetMasterVolume(float volume) { GameEngine::Audio().SetMasterVolume(volume); }
 	float AudioGetMasterVolume() { return GameEngine::Audio().GetMasterVolume(); }
 	void AudioStopAll() { GameEngine::Audio().StopAll(); }
@@ -330,7 +330,7 @@ void RegisterApp()
 		"UseOnlyTextures", L(Application& a, bool e) { a.UseOnlyTextures(e); },
 		"SetFont", L(Application& a, std::string_view f) { a.SetFont(f); },
 
-		// Input (defined in Application body — safe to use pointers)
+		// Input
 		"GetKey", &Application::GetKey,
 		"GetMouse", &Application::GetMouse,
 		"GetMousePos", &Application::GetMousePos,
@@ -388,8 +388,8 @@ void RegisterApp()
 		// Audio
 		"LoadSound", &Application::AudioLoad,
 		"UnloadSound", &Application::AudioUnload,
-		"PlaySound", &Application::AudioPlay,
-		"PlayOneShot", &Application::AudioPlayOneShot,
+		"Play", &Application::AudioPlay,
+		"PlayShot", &Application::AudioPlayShot,
 		"StopSound", &Application::AudioStop,
 		"PauseSound", &Application::AudioPause,
 		"ResumeSound", &Application::AudioResume,

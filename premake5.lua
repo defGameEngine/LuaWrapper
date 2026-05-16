@@ -23,6 +23,8 @@ workspace "LuaWrapper"
 
     filter {}
 
+defines { "DGE_NEED_AUDIO" }
+
 OUTPUT_DIR = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "Vendor/defGameEngine/Engine/Vendor/glfw"
@@ -108,6 +110,7 @@ project "Engine"
         "Vendor/defGameEngine/Engine/Sources",
         "Vendor/defGameEngine/Engine/Vendor/stb",
         "Vendor/defGameEngine/Engine/Vendor/glfw/include",
+        "Vendor/defGameEngine/Engine/Vendor/miniaudio",
         "Vendor/sol2/include",
         "Vendor/lua"
     }
@@ -181,6 +184,7 @@ project "LuaWrapper"
         "Vendor/defGameEngine/Engine/Include",
         "Vendor/defGameEngine/Engine/Vendor/stb",
         "Vendor/defGameEngine/Engine/Vendor/glfw/include",
+        "Vendor/defGameEngine/Engine/Vendor/miniaudio",
         "Vendor/sol2/include",
         "Vendor/lua"
     }
