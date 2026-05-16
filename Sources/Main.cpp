@@ -453,6 +453,11 @@ int main(int argc, char** argv)
 
 	g_Lua.open_libraries();
 
+	// sol2's default traceback handler calls unqualified_check_get<string_view> on stack index 1,
+	// which panics under Lua 5.5 when the error object is not a plain string. Disable it so our
+	// wrap_LuaPanic remains the sole error sink.
+	sol::protected_function::set_default_handler(sol::object{});
+
 	auto app = std::make_shared<Application>();
 	RegisterAll(app);
 
