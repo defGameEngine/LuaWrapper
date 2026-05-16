@@ -97,6 +97,22 @@ public:
 	size_t GetPickedState() { return GameEngine::GetCurrentState(); }
 	State* GetStateByIndex(size_t index) { return GameEngine::GetState(index); }
 
+	// === Audio ===
+
+	bool AudioLoad(std::string_view id, std::string_view path) { return GameEngine::Audio().Load(id, path); }
+	void AudioUnload(std::string_view id) { GameEngine::Audio().Unload(id); }
+	void AudioPlay(std::string_view id, bool loop, float volume) { GameEngine::Audio().Play(id, loop, volume); }
+	void AudioPlayOneShot(std::string_view path) { GameEngine::Audio().PlayOneShot(path); }
+	void AudioStop(std::string_view id) { GameEngine::Audio().Stop(id); }
+	void AudioPause(std::string_view id) { GameEngine::Audio().Pause(id); }
+	void AudioResume(std::string_view id) { GameEngine::Audio().Resume(id); }
+	bool AudioIsPlaying(std::string_view id) { return GameEngine::Audio().IsPlaying(id); }
+	void AudioSetVolume(std::string_view id, float volume) { GameEngine::Audio().SetVolume(id, volume); }
+	float AudioGetVolume(std::string_view id) { return GameEngine::Audio().GetVolume(id); }
+	void AudioSetMasterVolume(float volume) { GameEngine::Audio().SetMasterVolume(volume); }
+	float AudioGetMasterVolume() { return GameEngine::Audio().GetMasterVolume(); }
+	void AudioStopAll() { GameEngine::Audio().StopAll(); }
+
 protected:
 	bool OnUserCreate() override
 	{
@@ -367,7 +383,22 @@ void RegisterApp()
 		// States
 		"PickState", &Application::PickState,
 		"GetPickedState", &Application::GetPickedState,
-		"GetStateByIndex", &Application::GetStateByIndex
+		"GetStateByIndex", &Application::GetStateByIndex,
+
+		// Audio
+		"LoadSound", &Application::AudioLoad,
+		"UnloadSound", &Application::AudioUnload,
+		"PlaySound", &Application::AudioPlay,
+		"PlayOneShot", &Application::AudioPlayOneShot,
+		"StopSound", &Application::AudioStop,
+		"PauseSound", &Application::AudioPause,
+		"ResumeSound", &Application::AudioResume,
+		"IsSoundPlaying", &Application::AudioIsPlaying,
+		"SetSoundVolume", &Application::AudioSetVolume,
+		"GetSoundVolume", &Application::AudioGetVolume,
+		"SetMasterVolume", &Application::AudioSetMasterVolume,
+		"GetMasterVolume", &Application::AudioGetMasterVolume,
+		"StopAllSounds", &Application::AudioStopAll
 	);
 #undef L
 }
