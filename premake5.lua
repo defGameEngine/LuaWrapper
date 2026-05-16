@@ -219,6 +219,11 @@ project "LuaWrapper"
 
     filter {}
 
+    postbuildcommands
+    {
+        "{COPY} %{cfg.buildtarget.relpath} \"%{wks.location}/Build/Target/\""
+    }
+
     -- sol2 template instantiations require at least -O1 to avoid a
     -- g++/MinGW-PE COMDAT bug where COMDAT sections are silently omitted at -O0
     filter "configurations:Debug"
