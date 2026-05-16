@@ -99,16 +99,16 @@ public:
 
 	// === Audio ===
 
-	bool AudioLoad(std::string_view id, std::string_view path) { return GameEngine::Audio().Load(id, path); }
-	void AudioUnload(std::string_view id) { GameEngine::Audio().Unload(id); }
-	void AudioPlay(std::string_view id, bool loop, float volume) { GameEngine::Audio().Play(id, loop, volume); }
-	void AudioPlayOneShot(std::string_view path) { GameEngine::Audio().PlayOneShot(path); }
-	void AudioStop(std::string_view id) { GameEngine::Audio().Stop(id); }
-	void AudioPause(std::string_view id) { GameEngine::Audio().Pause(id); }
-	void AudioResume(std::string_view id) { GameEngine::Audio().Resume(id); }
-	bool AudioIsPlaying(std::string_view id) { return GameEngine::Audio().IsPlaying(id); }
-	void AudioSetVolume(std::string_view id, float volume) { GameEngine::Audio().SetVolume(id, volume); }
-	float AudioGetVolume(std::string_view id) { return GameEngine::Audio().GetVolume(id); }
+	bool AudioLoad(const std::string& id, const std::string& path) { return GameEngine::Audio().Load(id, path); }
+	void AudioUnload(const std::string& id) { GameEngine::Audio().Unload(id); }
+	void AudioPlay(const std::string& id, bool loop, float volume) { GameEngine::Audio().Play(id, loop, volume); }
+	void AudioPlayOneShot(const std::string& path) { GameEngine::Audio().PlayOneShot(path); }
+	void AudioStop(const std::string& id) { GameEngine::Audio().Stop(id); }
+	void AudioPause(const std::string& id) { GameEngine::Audio().Pause(id); }
+	void AudioResume(const std::string& id) { GameEngine::Audio().Resume(id); }
+	bool AudioIsPlaying(const std::string& id) { return GameEngine::Audio().IsPlaying(id); }
+	void AudioSetVolume(const std::string& id, float volume) { GameEngine::Audio().SetVolume(id, volume); }
+	float AudioGetVolume(const std::string& id) { return GameEngine::Audio().GetVolume(id); }
 	void AudioSetMasterVolume(float volume) { GameEngine::Audio().SetMasterVolume(volume); }
 	float AudioGetMasterVolume() { return GameEngine::Audio().GetMasterVolume(); }
 	void AudioStopAll() { GameEngine::Audio().StopAll(); }

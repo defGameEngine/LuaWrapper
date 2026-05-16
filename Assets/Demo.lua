@@ -14,8 +14,9 @@ local BGM_ID   = "bgm"
 local BGM_PATH = "Assets/Audio/bgm.ogg"
 local SFX_PATH = "Assets/Audio/sfx.wav"
 
-local audio_loaded     = false
-local audio_bgm_paused = false
+local audio_init_attempted = false
+local audio_loaded         = false
+local audio_bgm_paused     = false
 local audio_bgm_vol    = 0.8
 local audio_master_vol = 1.0
 local audio_sfx_flash  = 0.0
@@ -319,7 +320,12 @@ end
 local function page_audio(dt)
     draw_title("Page 5: Audio")
 
-    -- No files loaded — show hint and bail out
+    -- Attempt to load sounds once, on first visit to this page
+    if not audio_init_attempted then
+        audio_init_attempted = true
+        audio_loaded = Dge:LoadSound(BGM_ID, BGM_PATH)
+    end
+
     if not audio_loaded then
         Dge:DrawString(4,  18, "Sound files not found.", Colour.Red,  1, 1)
         Dge:DrawString(4,  30, "Copy to Assets/Audio/:", Colour.Grey, 1, 1)
@@ -457,7 +463,6 @@ end
 
 function OnCreate()
     ball_pos = Vector2f:new(SCREEN_W / 2, SCREEN_H / 2)
-    audio_loaded = Dge:LoadSound(BGM_ID, BGM_PATH)
     return true
 end
 
