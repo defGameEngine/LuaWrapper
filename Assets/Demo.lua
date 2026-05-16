@@ -1,4 +1,4 @@
-local SCREEN_W = 320
+﻿local SCREEN_W = 320
 local SCREEN_H = 240
 local PAGE_COUNT = 5
 
@@ -47,7 +47,7 @@ end
 local function draw_title(text)
     Dge:FillRectangle(0, 0, SCREEN_W, 10, Colour.DarkBlue)
     Dge:DrawString(2, 1, text, Colour.Yellow, 1, 1)
-    Dge:DrawString(SCREEN_W - 16, 1, "F1-F4", Colour.Grey, 1, 1)
+    Dge:DrawString(SCREEN_W - 22, 1, "F1-F5", Colour.Grey, 1, 1)
 end
 
 local function page_shapes(dt)
@@ -181,7 +181,7 @@ local function page_input(dt)
         Dge:DrawLine(mx, my - 5, mx, my + 5, Colour.Red)
     end
 
-    + стрелки
+
     local keys_info = {
         { key=Key.W,     name="W"    },
         { key=Key.A,     name="A"    },
