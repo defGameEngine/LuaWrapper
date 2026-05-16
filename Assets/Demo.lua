@@ -10,9 +10,11 @@ local ball_radius = 8
 local hue_t   = 0.0
 local blink_t = 0.0
 
+local _SCRIPT_DIR = (debug.getinfo(1, 'S').source:sub(2)):match("(.*[/\\])") or "./"
+
 local BGM_ID   = "bgm"
-local BGM_PATH = "Assets/Audio/bgm.ogg"
-local SFX_PATH = "Assets/Audio/sfx.wav"
+local BGM_PATH = _SCRIPT_DIR .. "Audio/bgm.ogg"
+local SFX_PATH = _SCRIPT_DIR .. "Audio/sfx.wav"
 
 local audio_init_attempted = false
 local audio_loaded         = false
