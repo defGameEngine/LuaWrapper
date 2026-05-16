@@ -84,7 +84,7 @@ project "Engine"
 
     staticruntime "On"
 
-    defines { "DGE_PLATFORM_GLFW3" }
+    defines { "DGE_PLATFORM_GLFW3", "DGE_NEED_AUDIO" }
 
     pchheader "Pch.hpp"
     pchsource "Vendor/defGameEngine/Engine/Sources/Pch.cpp"
@@ -169,7 +169,9 @@ project "LuaWrapper"
 
     defines
     {
-        "SOL_ALL_SAFETIES_ON=1"
+        "SOL_ALL_SAFETIES_ON=1",
+        "DGE_NEED_AUDIO",
+        "DGE_PLATFORM_GLFW3"
     }
 
     files

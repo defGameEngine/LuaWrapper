@@ -345,7 +345,7 @@ local function page_audio(dt)
             Dge:StopSound(BGM_ID)
             audio_bgm_paused = false
         else
-            Dge:PlaySound(BGM_ID, true, audio_bgm_vol)
+            Dge:Play(BGM_ID, true, audio_bgm_vol)
         end
     end
 
@@ -362,7 +362,7 @@ local function page_audio(dt)
 
     -- Space: fire one-shot SFX
     if Dge:GetKey(Key.Space).pressed then
-        Dge:PlayOneShot(SFX_PATH)
+        Dge:PlayShot(SFX_PATH)
         audio_sfx_flash = 0.35
     end
 

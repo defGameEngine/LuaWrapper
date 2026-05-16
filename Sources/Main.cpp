@@ -97,18 +97,24 @@ public:
 	size_t GetPickedState() { return GameEngine::GetCurrentState(); }
 	State* GetStateByIndex(size_t index) { return GameEngine::GetState(index); }
 
-	// Audio
+	// === Audio ===
+	// Lua uses string IDs; hash them to uint32_t for the C++ AudioHandler API.
 
-	bool AudioLoad(uint32_t id, const std::string& path) { return GameEngine::Audio().Load(id, path); }
-	void AudioUnload(uint32_t id) { GameEngine::Audio().Unload(id); }
-	void AudioPlay(uint32_t id, bool loop, float volume) { GameEngine::Audio().Play(id, loop, volume); }
+	static uint32_t HashId(const std::string& id)
+	{
+		return static_cast<uint32_t>(std::hash<std::string>{}(id));
+	}
+
+	bool AudioLoad(const std::string& id, const std::string& path) { return GameEngine::Audio().Load(HashId(id), path); }
+	void AudioUnload(const std::string& id) { GameEngine::Audio().Unload(HashId(id)); }
+	void AudioPlay(const std::string& id, bool loop, float volume) { GameEngine::Audio().Play(HashId(id), loop, volume); }
 	void AudioPlayShot(const std::string& path) { GameEngine::Audio().Play(path); }
-	void AudioStop(uint32_t id) { GameEngine::Audio().Stop(id); }
-	void AudioPause(uint32_t id) { GameEngine::Audio().Pause(id); }
-	void AudioResume(uint32_t id) { GameEngine::Audio().Resume(id); }
-	bool AudioIsPlaying(uint32_t id) { return GameEngine::Audio().IsPlaying(id); }
-	void AudioSetVolume(uint32_t id, float volume) { GameEngine::Audio().SetVolume(id, volume); }
-	float AudioGetVolume(uint32_t id) { return GameEngine::Audio().GetVolume(id); }
+	void AudioStop(const std::string& id) { GameEngine::Audio().Stop(HashId(id)); }
+	void AudioPause(const std::string& id) { GameEngine::Audio().Pause(HashId(id)); }
+	void AudioResume(const std::string& id) { GameEngine::Audio().Resume(HashId(id)); }
+	bool AudioIsPlaying(const std::string& id) { return GameEngine::Audio().IsPlaying(HashId(id)); }
+	void AudioSetVolume(const std::string& id, float volume) { GameEngine::Audio().SetVolume(HashId(id), volume); }
+	float AudioGetVolume(const std::string& id) { return GameEngine::Audio().GetVolume(HashId(id)); }
 	void AudioSetMasterVolume(float volume) { GameEngine::Audio().SetMasterVolume(volume); }
 	float AudioGetMasterVolume() { return GameEngine::Audio().GetMasterVolume(); }
 	void AudioStopAll() { GameEngine::Audio().StopAll(); }
