@@ -1,6 +1,6 @@
 ﻿local SCREEN_W = 320
 local SCREEN_H = 240
-local PAGE_COUNT = 5
+local PAGE_COUNT = 6
 
 local page        = 1
 local ball_pos    = Vector2f:new(SCREEN_W / 2, SCREEN_H / 2)
@@ -22,6 +22,20 @@ local audio_bgm_paused     = false
 local audio_bgm_vol    = 0.8
 local audio_master_vol = 1.0
 local audio_sfx_flash  = 0.0
+
+local Hud = dofile(_SCRIPT_DIR .. "HUD.lua")
+local hud  -- инициализируется в OnCreate, когда Dge уже доступен
+
+-- Состояние страницы Doom HUD
+local doom_hp       = 100
+local doom_armor    = 50
+local doom_ammo     = 30
+local doom_max_ammo = 50
+local doom_keys     = { blue = false, yellow = false, red = false }
+local doom_weapons  = { false, true, false, true, false, false }  -- слоты 2-7
+local doom_shoot_t  = 0.0   -- таймер вспышки выстрела
+local doom_hurt_t   = 0.0   -- таймер покраснения экрана при ударе
+local doom_dead     = false
 
 local function lerp(a, b, t)
     return a + (b - a) * t
@@ -50,7 +64,7 @@ end
 local function draw_title(text)
     Dge:FillRectangle(0, 0, SCREEN_W, 10, Colour.DarkBlue)
     Dge:DrawString(2, 1, text, Colour.Yellow, 1, 1)
-    Dge:DrawString(SCREEN_W - 22, 1, "F1-F5", Colour.Grey, 1, 1)
+    Dge:DrawString(SCREEN_W - 22, 1, "F1-F6", Colour.Grey, 1, 1)
 end
 
 local function page_shapes(dt)
@@ -322,7 +336,6 @@ end
 local function page_audio(dt)
     draw_title("Page 5: Audio")
 
-    -- Attempt to load sounds once, on first visit to this page
     if not audio_init_attempted then
         audio_init_attempted = true
         audio_loaded = Dge:LoadSound(BGM_ID, BGM_PATH)
@@ -338,8 +351,6 @@ local function page_audio(dt)
         return
     end
 
-    -- Input ---------------------------------------------------------------
-    -- B: play / stop BGM
     if Dge:GetKey(Key.B).pressed then
         if Dge:IsSoundPlaying(BGM_ID) then
             Dge:StopSound(BGM_ID)
@@ -349,7 +360,6 @@ local function page_audio(dt)
         end
     end
 
-    -- P: pause / resume
     if Dge:GetKey(Key.P).pressed then
         if Dge:IsSoundPlaying(BGM_ID) then
             Dge:PauseSound(BGM_ID)
@@ -360,13 +370,11 @@ local function page_audio(dt)
         end
     end
 
-    -- Space: fire one-shot SFX
     if Dge:GetKey(Key.Space).pressed then
         Dge:PlayShot(SFX_PATH)
         audio_sfx_flash = 0.35
     end
 
-    -- Up / Down: BGM volume
     if Dge:GetKey(Key.Up).pressed then
         audio_bgm_vol = math.min(1.0, audio_bgm_vol + 0.1)
         Dge:SetSoundVolume(BGM_ID, audio_bgm_vol)
@@ -376,7 +384,6 @@ local function page_audio(dt)
         Dge:SetSoundVolume(BGM_ID, audio_bgm_vol)
     end
 
-    -- Left / Right: master volume
     if Dge:GetKey(Key.Right).pressed then
         audio_master_vol = math.min(1.0, audio_master_vol + 0.1)
         Dge:SetMasterVolume(audio_master_vol)
@@ -388,7 +395,6 @@ local function page_audio(dt)
 
     audio_sfx_flash = math.max(0.0, audio_sfx_flash - dt)
 
-    -- BGM status -----------------------------------------------------------
     local bgm_playing = Dge:IsSoundPlaying(BGM_ID)
     local status, status_col
     if bgm_playing then
@@ -406,7 +412,6 @@ local function page_audio(dt)
     Dge:FillRectangle(70, 12, 66, 11, Pixel:new(0, 0, 0, 180))
     Dge:DrawString(72, 14, status, status_col, 1, 1)
 
-    -- Controls legend ------------------------------------------------------
     local BAR_X = 88
     local BAR_W = 150
 
@@ -424,7 +429,6 @@ local function page_audio(dt)
         Dge:DrawString(52, cy, c.desc, Colour.White,  1, 1)
     end
 
-    -- Volume bars ----------------------------------------------------------
     local pct_bgm    = string.format("%3d%%", math.floor(audio_bgm_vol    * 100 + 0.5))
     local pct_master = string.format("%3d%%", math.floor(audio_master_vol * 100 + 0.5))
 
@@ -436,14 +440,12 @@ local function page_audio(dt)
     draw_vol_bar(BAR_X, 113, BAR_W, audio_master_vol, Colour.Orange)
     Dge:DrawString(BAR_X + BAR_W + 4, 114, pct_master, Colour.Orange, 1, 1)
 
-    -- SFX flash indicator --------------------------------------------------
     local sfx_bg  = audio_sfx_flash > 0 and Pixel:new(0, 80, 0, 255) or Pixel:new(20, 20, 20, 255)
     local sfx_txt = audio_sfx_flash > 0 and "*** SFX fired! ***" or "[ Space ] to fire SFX"
     local sfx_col = audio_sfx_flash > 0 and Colour.Lime or Colour.DarkGrey
     Dge:FillRectangle(4, 130, SCREEN_W - 8, 13, sfx_bg)
     Dge:DrawString(6, 133, sfx_txt, sfx_col, 1, 1)
 
-    -- Waveform animation (purely decorative) -------------------------------
     local wave_y0 = 152
     Dge:DrawString(4, wave_y0, "Live waveform (decorative):", Colour.DarkGrey, 1, 1)
     local amp = bgm_playing and 28 or 4
@@ -455,16 +457,230 @@ local function page_audio(dt)
         Dge:Draw(x, y, hue_to_pixel((t + hue_t) % 1))
     end
 
-    -- Horizontal axis
     Dge:DrawLine(4, wave_y0 + 14, SCREEN_W - 4, wave_y0 + 14, Pixel:new(40, 40, 40, 255))
 
     draw_border(Colour.DarkGrey)
 end
 
+-- Рисует лицо Думгая в центре статус-бара.
+-- Выражение меняется в зависимости от hp: улыбка → нейтраль → гримаса → мёртв.
+local function doom_face(cx, cy)
+    local dark = Pixel:new(20, 20, 20)
+    local skin = doom_dead      and Pixel:new(110, 90, 70)
+              or doom_hurt_t > 0 and Pixel:new(220, 120, 90)
+              or                    Pixel:new(200, 170, 115)
+
+    Dge:FillCircle(cx, cy, 10, skin)
+    Dge:DrawCircle(cx, cy,  10, dark)
+
+    if doom_dead then
+        -- X-образные глаза
+        Dge:DrawLine(cx-5, cy-4, cx-2, cy-1, dark)
+        Dge:DrawLine(cx-2, cy-4, cx-5, cy-1, dark)
+        Dge:DrawLine(cx+2, cy-4, cx+5, cy-1, dark)
+        Dge:DrawLine(cx+5, cy-4, cx+2, cy-1, dark)
+        -- Прямой рот (мёртв)
+        Dge:FillRectangle(cx-4, cy+4, 9, 2, dark)
+    else
+        -- Обычные глаза (прямоугольники 3×3)
+        Dge:FillRectangle(cx-6, cy-4, 3, 3, dark)
+        Dge:FillRectangle(cx+3, cy-4, 3, 3, dark)
+
+        -- Рот зависит от здоровья
+        if doom_hp > 70 then
+            -- Улыбка: горизонтальная линия с загнутыми краями вверх
+            Dge:FillRectangle(cx-4, cy+5, 9, 2, dark)
+            Dge:Draw(cx-4, cy+4, dark)
+            Dge:Draw(cx+4, cy+4, dark)
+        elseif doom_hp > 30 then
+            -- Нейтраль
+            Dge:FillRectangle(cx-4, cy+5, 9, 2, dark)
+        else
+            -- Гримаса: загнуто вниз
+            Dge:FillRectangle(cx-4, cy+4, 9, 2, dark)
+            Dge:Draw(cx-4, cy+6, dark)
+            Dge:Draw(cx+4, cy+6, dark)
+        end
+    end
+end
+
+-- Рисует 3D-коридор в стиле Doom.
+-- Техника: два FillTriangle для боковых стен + прямоугольники для дальней стены.
+-- Это "фейковый" 3D без рейкастинга, но даёт нужный эффект перспективы.
+local function doom_viewport(dt)
+    local GH = 182   -- высота игровой области
+    local HZ = 91    -- горизонт (половина GH)
+
+    -- Потолок и пол — базовый фон двух полутонов
+    Dge:FillRectangle(0, 0, SCREEN_W, HZ, Pixel:new(22, 22, 34))
+    Dge:FillRectangle(0, HZ, SCREEN_W, GH - HZ, Pixel:new(34, 26, 18))
+
+    -- Дальняя стена — прямоугольный «тоннель»
+    -- FillTriangle(x1,y1, x2,y2, x3,y3, col) — одна API-функция для закрашенного треугольника
+    -- Левая стена: треугольник от левого края до горизонта в центре-левой части
+    Dge:FillTriangle(0, 0,    0, GH - 1, 80, HZ, Pixel:new(52, 46, 40))
+    -- Правая стена: чуть темнее (нет прямого освещения)
+    Dge:FillTriangle(SCREEN_W - 1, 0, SCREEN_W - 1, GH - 1, 240, HZ, Pixel:new(38, 34, 30))
+
+    -- Дальняя стена (центральный прямоугольник)
+    Dge:FillRectangle(80, 0, 160, GH, Pixel:new(30, 28, 26))
+
+    -- Проём-дверь в конце коридора
+    Dge:FillRectangle(128, 22, 64, 130, Pixel:new(8, 8, 12))
+    Dge:DrawRectangle(128, 22, 64, 130, Pixel:new(70, 62, 54))
+
+    -- Бочка у левой стены (декорация)
+    Dge:FillRectangle(88, 128, 22, 28, Pixel:new(58, 52, 38))
+    Dge:DrawRectangle(88, 128, 22, 28, Pixel:new(85, 78, 60))
+    Dge:DrawLine(88, 136, 110, 136, Pixel:new(85, 78, 60))
+    Dge:DrawLine(88, 148, 110, 148, Pixel:new(85, 78, 60))
+
+    -- Враг в проёме (если игрок жив)
+    if not doom_dead then
+        local ex, ey = 143, 52
+        Dge:FillRectangle(ex,    ey,     34, 55, Pixel:new(80, 30, 20))  -- тело
+        Dge:FillCircle(ex + 17, ey - 10, 11, Pixel:new(100, 42, 32))    -- голова
+        -- Глаза врага (красные точки)
+        Dge:FillRectangle(ex + 10, ey - 13, 3, 3, Pixel:new(255, 50, 50))
+        Dge:FillRectangle(ex + 21, ey - 13, 3, 3, Pixel:new(255, 50, 50))
+    end
+
+    -- Вспышка выстрела: яркий конус снизу-по-центру
+    if doom_shoot_t > 0 then
+        local t = doom_shoot_t / 0.12
+        local r = math.floor(28 * t)
+        Dge:FillCircle(SCREEN_W // 2, GH, r, Pixel:new(255, 210, 60))
+        Dge:FillCircle(SCREEN_W // 2, GH, math.floor(r * 0.5), Pixel:new(255, 255, 200))
+    end
+
+    -- Красный виньет при получении урона
+    if doom_hurt_t > 0 then
+        local t = doom_hurt_t / 0.4
+        local bh = math.floor(22 * t)
+        local rc = Pixel:new(180, 0, 0)
+        Dge:FillRectangle(0,        0,        SCREEN_W, bh,   rc)
+        Dge:FillRectangle(0,        GH - bh,  SCREEN_W, bh,   rc)
+        Dge:FillRectangle(0,        0,        bh,        GH,   rc)
+        Dge:FillRectangle(SCREEN_W - bh, 0,   bh,        GH,   rc)
+    end
+end
+
+-- Рисует статус-бар в стиле Doom (нижние 50 пикселей).
+local function doom_status_bar()
+    local BY = 182    -- y начала бара
+    local BH = 50     -- высота бара (182..231)
+
+    -- Фон бара
+    Dge:FillRectangle(0, BY, SCREEN_W, BH, Pixel:new(52, 48, 44))
+
+    -- Вертикальные разделители секций
+    local div_col = Pixel:new(30, 28, 26)
+    for _, dx in ipairs({ 66, 136, 178, 240 }) do
+        Dge:DrawLine(dx, BY, dx, BY + BH - 1, div_col)
+    end
+
+    -- Цвета для надписей и цифр в стиле Doom (тёмно-красный и янтарный)
+    local label_col = Pixel:new(160, 0, 0)
+    local num_col   = Pixel:new(255, 145, 0)
+
+    -- ── Секция AMMO (x=0..65) ─────────────────────────────────────────────
+    Dge:DrawString(4,  BY + 2,  "AMMO", label_col, 1, 1)
+    local ammo_str = string.format("%2d", doom_ammo)
+    Dge:DrawString(4,  BY + 12, ammo_str, num_col, 2, 2)
+    -- Мини-полоска патронов
+    hud:Bar(4, BY + 42, 58, 5, doom_ammo, doom_max_ammo, Pixel:new(200, 130, 0), nil, div_col)
+
+    -- ── Секция HEALTH (x=68..135) ─────────────────────────────────────────
+    Dge:DrawString(70, BY + 2,  "HLTH", label_col, 1, 1)
+    local hp_str = string.format("%3d%%", doom_hp)
+    Dge:DrawString(70, BY + 12, hp_str, num_col, 2, 2)
+    hud:Bar(70, BY + 42, 62, 5, doom_hp, 100, Pixel:new(220, 40, 40), nil, div_col)
+
+    -- ── Лицо Думгая (x=138..177) ──────────────────────────────────────────
+    doom_face(157, BY + 22)
+
+    -- ── Секция ARMS (x=180..239) ──────────────────────────────────────────
+    -- Сетка 3×2 для оружий 2-7
+    Dge:DrawString(184, BY + 2, "ARMS", label_col, 1, 1)
+    for i = 1, 6 do
+        local col = (i - 1) % 3
+        local row = math.floor((i - 1) / 3)
+        local wx  = 184 + col * 18
+        local wy  = BY + 13 + row * 16
+        local have = doom_weapons[i]
+        local bg   = have and Pixel:new(70, 65, 60) or Pixel:new(35, 32, 30)
+        local tc   = have and Pixel:new(255, 200, 80) or Pixel:new(80, 75, 70)
+        Dge:FillRectangle(wx, wy, 16, 14, bg)
+        Dge:DrawString(wx + 4, wy + 3, tostring(i + 1), tc, 1, 1)
+    end
+
+    -- ── Секция ARMOR (x=242..305) ─────────────────────────────────────────
+    Dge:DrawString(244, BY + 2,  "ARMO", label_col, 1, 1)
+    local arm_str = string.format("%3d%%", doom_armor)
+    Dge:DrawString(244, BY + 12, arm_str, num_col, 2, 2)
+    hud:Bar(244, BY + 42, 62, 5, doom_armor, 100, Pixel:new(60, 120, 220), nil, div_col)
+
+    -- ── Ключи (x=308..319) ────────────────────────────────────────────────
+    local key_colors = {
+        { col = Pixel:new(0, 80, 220),  have = doom_keys.blue   },
+        { col = Pixel:new(220, 200, 0), have = doom_keys.yellow },
+        { col = Pixel:new(220, 0, 0),   have = doom_keys.red    },
+    }
+    for i, k in ipairs(key_colors) do
+        local kc = k.have and k.col or Pixel:new(30, 28, 26)
+        Dge:FillCircle(313, BY + 8 + (i - 1) * 14, 5, kc)
+    end
+end
+
+local function page_hud(dt)
+    draw_title("Page 6: Doom HUD")
+
+    -- Управление (работает только на этой странице)
+    if not doom_dead then
+        local shoot = Dge:GetKey(Key.Space)
+        if shoot.pressed and doom_ammo > 0 then
+            doom_ammo   = doom_ammo - 1
+            doom_shoot_t = 0.12
+        end
+    end
+    if Dge:GetKey(Key.H).pressed then
+        doom_hp    = math.min(100, doom_hp + 25)
+        doom_dead  = false
+    end
+    if Dge:GetKey(Key.D).pressed and not doom_dead then
+        doom_hp     = math.max(0, doom_hp - 15)
+        doom_hurt_t = 0.4
+        if doom_hp == 0 then doom_dead = true end
+    end
+    if Dge:GetKey(Key.R).pressed then
+        doom_ammo = math.min(doom_max_ammo, doom_ammo + 10)
+    end
+    if Dge:GetKey(Key.K).pressed then
+        if     not doom_keys.blue   then doom_keys.blue   = true
+        elseif not doom_keys.yellow then doom_keys.yellow = true
+        elseif not doom_keys.red    then doom_keys.red    = true
+        else
+            doom_keys.blue = false; doom_keys.yellow = false; doom_keys.red = false
+        end
+    end
+
+    -- Обновление таймеров
+    doom_shoot_t = math.max(0, doom_shoot_t - dt)
+    doom_hurt_t  = math.max(0, doom_hurt_t  - dt)
+
+    -- Рисование
+    doom_viewport(dt)
+    doom_status_bar()
+
+    -- Подсказка управления поверх всего
+    local hint = "[Space]=Shoot  [D]=Damage  [H]=Heal  [R]=Reload  [K]=Key"
+    Dge:DrawString(2, SCREEN_H - 20, hint, Pixel:new(120, 120, 120), 1, 1)
+end
 
 
 function OnCreate()
     ball_pos = Vector2f:new(SCREEN_W / 2, SCREEN_H / 2)
+    hud      = Hud:new(Dge)
     return true
 end
 
@@ -475,6 +691,7 @@ function OnUpdate(dt)
     if Dge:GetKey(Key.F3).pressed then page = 3 end
     if Dge:GetKey(Key.F4).pressed then page = 4 end
     if Dge:GetKey(Key.F5).pressed then page = 5 end
+    if Dge:GetKey(Key.F6).pressed then page = 6 end
 
     
     hue_t  = (hue_t + dt * 0.2) % 1.0
@@ -489,13 +706,15 @@ function OnUpdate(dt)
     elseif page == 3 then page_input(dt)
     elseif page == 4 then page_vectors(dt)
     elseif page == 5 then page_audio(dt)
+    elseif page == 6 then page_hud(dt)
     end
 
     
     local fps_col = Dge:GetFPS() >= 55 and Colour.Green or Colour.Red
-    local bar = string.format("FPS:%d  Page:%d/5  [F1-F5]", Dge:GetFPS(), page)
+    local bar = string.format("FPS:%d  Page:%d/6  [F1-F6]", Dge:GetFPS(), page)
     Dge:FillRectangle(0, SCREEN_H - 9, SCREEN_W, 9, Pixel:new(0, 0, 0, 200))
     Dge:DrawString(2, SCREEN_H - 8, bar, fps_col, 1, 1)
+
 
     return true
 end
