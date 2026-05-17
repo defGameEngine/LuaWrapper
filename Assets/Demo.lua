@@ -462,8 +462,6 @@ local function page_audio(dt)
     draw_border(Colour.DarkGrey)
 end
 
--- Рисует лицо Думгая в центре статус-бара.
--- Выражение меняется в зависимости от hp: улыбка → нейтраль → гримаса → мёртв.
 local function doom_face(cx, cy)
     local dark = Pixel:new(20, 20, 20)
     local skin = doom_dead      and Pixel:new(110, 90, 70)
@@ -474,29 +472,22 @@ local function doom_face(cx, cy)
     Dge:DrawCircle(cx, cy,  10, dark)
 
     if doom_dead then
-        -- X-образные глаза
         Dge:DrawLine(cx-5, cy-4, cx-2, cy-1, dark)
         Dge:DrawLine(cx-2, cy-4, cx-5, cy-1, dark)
         Dge:DrawLine(cx+2, cy-4, cx+5, cy-1, dark)
         Dge:DrawLine(cx+5, cy-4, cx+2, cy-1, dark)
-        -- Прямой рот (мёртв)
         Dge:FillRectangle(cx-4, cy+4, 9, 2, dark)
     else
-        -- Обычные глаза (прямоугольники 3×3)
         Dge:FillRectangle(cx-6, cy-4, 3, 3, dark)
         Dge:FillRectangle(cx+3, cy-4, 3, 3, dark)
 
-        -- Рот зависит от здоровья
         if doom_hp > 70 then
-            -- Улыбка: горизонтальная линия с загнутыми краями вверх
             Dge:FillRectangle(cx-4, cy+5, 9, 2, dark)
             Dge:Draw(cx-4, cy+4, dark)
             Dge:Draw(cx+4, cy+4, dark)
         elseif doom_hp > 30 then
-            -- Нейтраль
             Dge:FillRectangle(cx-4, cy+5, 9, 2, dark)
         else
-            -- Гримаса: загнуто вниз
             Dge:FillRectangle(cx-4, cy+4, 9, 2, dark)
             Dge:Draw(cx-4, cy+6, dark)
             Dge:Draw(cx+4, cy+6, dark)
@@ -504,48 +495,18 @@ local function doom_face(cx, cy)
     end
 end
 
--- Рисует 3D-коридор в стиле Doom.
--- Техника: два FillTriangle для боковых стен + прямоугольники для дальней стены.
--- Это "фейковый" 3D без рейкастинга, но даёт нужный эффект перспективы.
 local function doom_viewport(dt)
-    local GH = 182   -- высота игровой области
-    local HZ = 91    -- горизонт (половина GH)
+    local GH = 182
+    local HZ = 91
 
-    -- Потолок и пол — базовый фон двух полутонов
-    Dge:FillRectangle(0, 0, SCREEN_W, HZ, Pixel:new(22, 22, 34))
-    Dge:FillRectangle(0, HZ, SCREEN_W, GH - HZ, Pixel:new(34, 26, 18))
-
-    -- Дальняя стена — прямоугольный «тоннель»
-    -- FillTriangle(x1,y1, x2,y2, x3,y3, col) — одна API-функция для закрашенного треугольника
-    -- Левая стена: треугольник от левого края до горизонта в центре-левой части
-    Dge:FillTriangle(0, 0,    0, GH - 1, 80, HZ, Pixel:new(52, 46, 40))
-    -- Правая стена: чуть темнее (нет прямого освещения)
-    Dge:FillTriangle(SCREEN_W - 1, 0, SCREEN_W - 1, GH - 1, 240, HZ, Pixel:new(38, 34, 30))
-
-    -- Дальняя стена (центральный прямоугольник)
-    Dge:FillRectangle(80, 0, 160, GH, Pixel:new(30, 28, 26))
-
-    -- Проём-дверь в конце коридора
-    Dge:FillRectangle(128, 22, 64, 130, Pixel:new(8, 8, 12))
-    Dge:DrawRectangle(128, 22, 64, 130, Pixel:new(70, 62, 54))
-
-    -- Бочка у левой стены (декорация)
-    Dge:FillRectangle(88, 128, 22, 28, Pixel:new(58, 52, 38))
-    Dge:DrawRectangle(88, 128, 22, 28, Pixel:new(85, 78, 60))
-    Dge:DrawLine(88, 136, 110, 136, Pixel:new(85, 78, 60))
-    Dge:DrawLine(88, 148, 110, 148, Pixel:new(85, 78, 60))
-
-    -- Враг в проёме (если игрок жив)
     if not doom_dead then
         local ex, ey = 143, 52
         Dge:FillRectangle(ex,    ey,     34, 55, Pixel:new(80, 30, 20))  -- тело
         Dge:FillCircle(ex + 17, ey - 10, 11, Pixel:new(100, 42, 32))    -- голова
-        -- Глаза врага (красные точки)
         Dge:FillRectangle(ex + 10, ey - 13, 3, 3, Pixel:new(255, 50, 50))
         Dge:FillRectangle(ex + 21, ey - 13, 3, 3, Pixel:new(255, 50, 50))
     end
 
-    -- Вспышка выстрела: яркий конус снизу-по-центру
     if doom_shoot_t > 0 then
         local t = doom_shoot_t / 0.12
         local r = math.floor(28 * t)
@@ -553,7 +514,6 @@ local function doom_viewport(dt)
         Dge:FillCircle(SCREEN_W // 2, GH, math.floor(r * 0.5), Pixel:new(255, 255, 200))
     end
 
-    -- Красный виньет при получении урона
     if doom_hurt_t > 0 then
         local t = doom_hurt_t / 0.4
         local bh = math.floor(22 * t)
@@ -565,42 +525,32 @@ local function doom_viewport(dt)
     end
 end
 
--- Рисует статус-бар в стиле Doom (нижние 50 пикселей).
 local function doom_status_bar()
-    local BY = 182    -- y начала бара
-    local BH = 50     -- высота бара (182..231)
+    local BY = 182
+    local BH = 50
 
-    -- Фон бара
     Dge:FillRectangle(0, BY, SCREEN_W, BH, Pixel:new(52, 48, 44))
 
-    -- Вертикальные разделители секций
     local div_col = Pixel:new(30, 28, 26)
     for _, dx in ipairs({ 66, 136, 178, 240 }) do
         Dge:DrawLine(dx, BY, dx, BY + BH - 1, div_col)
     end
 
-    -- Цвета для надписей и цифр в стиле Doom (тёмно-красный и янтарный)
     local label_col = Pixel:new(160, 0, 0)
     local num_col   = Pixel:new(255, 145, 0)
 
-    -- ── Секция AMMO (x=0..65) ─────────────────────────────────────────────
     Dge:DrawString(4,  BY + 2,  "AMMO", label_col, 1, 1)
     local ammo_str = string.format("%2d", doom_ammo)
     Dge:DrawString(4,  BY + 12, ammo_str, num_col, 2, 2)
-    -- Мини-полоска патронов
     hud:Bar(4, BY + 42, 58, 5, doom_ammo, doom_max_ammo, Pixel:new(200, 130, 0), nil, div_col)
 
-    -- ── Секция HEALTH (x=68..135) ─────────────────────────────────────────
     Dge:DrawString(70, BY + 2,  "HLTH", label_col, 1, 1)
     local hp_str = string.format("%3d%%", doom_hp)
     Dge:DrawString(70, BY + 12, hp_str, num_col, 2, 2)
     hud:Bar(70, BY + 42, 62, 5, doom_hp, 100, Pixel:new(220, 40, 40), nil, div_col)
 
-    -- ── Лицо Думгая (x=138..177) ──────────────────────────────────────────
     doom_face(157, BY + 22)
 
-    -- ── Секция ARMS (x=180..239) ──────────────────────────────────────────
-    -- Сетка 3×2 для оружий 2-7
     Dge:DrawString(184, BY + 2, "ARMS", label_col, 1, 1)
     for i = 1, 6 do
         local col = (i - 1) % 3
@@ -614,13 +564,11 @@ local function doom_status_bar()
         Dge:DrawString(wx + 4, wy + 3, tostring(i + 1), tc, 1, 1)
     end
 
-    -- ── Секция ARMOR (x=242..305) ─────────────────────────────────────────
     Dge:DrawString(244, BY + 2,  "ARMO", label_col, 1, 1)
     local arm_str = string.format("%3d%%", doom_armor)
     Dge:DrawString(244, BY + 12, arm_str, num_col, 2, 2)
     hud:Bar(244, BY + 42, 62, 5, doom_armor, 100, Pixel:new(60, 120, 220), nil, div_col)
 
-    -- ── Ключи (x=308..319) ────────────────────────────────────────────────
     local key_colors = {
         { col = Pixel:new(0, 80, 220),  have = doom_keys.blue   },
         { col = Pixel:new(220, 200, 0), have = doom_keys.yellow },
@@ -635,7 +583,6 @@ end
 local function page_hud(dt)
     draw_title("Page 6: Doom HUD")
 
-    -- Управление (работает только на этой странице)
     if not doom_dead then
         local shoot = Dge:GetKey(Key.Space)
         if shoot.pressed and doom_ammo > 0 then
@@ -664,15 +611,12 @@ local function page_hud(dt)
         end
     end
 
-    -- Обновление таймеров
     doom_shoot_t = math.max(0, doom_shoot_t - dt)
     doom_hurt_t  = math.max(0, doom_hurt_t  - dt)
 
-    -- Рисование
     doom_viewport(dt)
     doom_status_bar()
 
-    -- Подсказка управления поверх всего
     local hint = "[Space]=Shoot  [D]=Damage  [H]=Heal  [R]=Reload  [K]=Key"
     Dge:DrawString(2, SCREEN_H - 20, hint, Pixel:new(120, 120, 120), 1, 1)
 end
@@ -680,7 +624,7 @@ end
 
 function OnCreate()
     ball_pos = Vector2f:new(SCREEN_W / 2, SCREEN_H / 2)
-    hud      = Hud:new(Dge)
+    hud = Hud:new(Dge)
     return true
 end
 
@@ -701,7 +645,7 @@ function OnUpdate(dt)
     Dge:Clear(Pixel:new(8, 8, 16, 255))
 
     
-    if     page == 1 then page_shapes(dt)
+    if page == 1 then page_shapes(dt)
     elseif page == 2 then page_text_pixel(dt)
     elseif page == 3 then page_input(dt)
     elseif page == 4 then page_vectors(dt)
@@ -721,10 +665,10 @@ end
 
 function CreateApp()
     return {
-        title       = "defGameEngine Lua Wrapper Demo",
-        size        = { SCREEN_W, SCREEN_H, 3, 3 },
+        title = "defGameEngine Lua Wrapper Demo",
+        size = { SCREEN_W, SCREEN_H, 3, 3 },
         full_screen = false,
-        vsync       = false,
+        vsync = false,
         dirty_pixel = false,
     }
 end

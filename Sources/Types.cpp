@@ -26,7 +26,7 @@ void InitialiseLayerType(sol::state& lua)
 void InitialisePixelType(sol::state& lua)
 {
 	lua.new_usertype<Pixel>("Pixel",
-		sol::constructors<Pixel(), Pixel(uint8_t, uint8_t, uint8_t, uint8_t)>(),
+		sol::constructors<Pixel(), Pixel(uint8_t, uint8_t, uint8_t), Pixel(uint8_t, uint8_t, uint8_t, uint8_t)>(),
 		"r", sol::property(&Pixel::r, &Pixel::r),
 		"g", sol::property(&Pixel::g, &Pixel::g),
 		"b", sol::property(&Pixel::b, &Pixel::b),

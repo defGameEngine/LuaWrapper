@@ -134,12 +134,16 @@ protected:
 			return false;
 		}
 
-		return g_Lua["OnCreate"]();
+		sol::protected_function_result r = g_Lua["OnCreate"]();
+		if (!r.valid()) { sol::error e = r; std::cerr << "[LUA] Error in OnCreate: " << e.what() << '\n'; return false; }
+		return r.get<bool>();
 	}
 
 	bool OnUserUpdate(float deltaTime) override
 	{
-		return g_Lua["OnUpdate"](deltaTime);
+		sol::protected_function_result r = g_Lua["OnUpdate"](deltaTime);
+		if (!r.valid()) { sol::error e = r; std::cerr << "[LUA] Error in OnUpdate: " << e.what() << '\n'; return false; }
+		return r.get<bool>();
 	}
 };
 
